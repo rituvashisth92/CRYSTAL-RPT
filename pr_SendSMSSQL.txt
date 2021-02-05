@@ -1,0 +1,131 @@
+USE [EsData]
+GO
+/****** Object:  StoredProcedure [dbo].[pr_SendSmsSQL]    Script Date: 11/09/2020 12:39:51 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Batch submitted through debugger: SQLQuery41.sql|7|0|C:\Users\Administrator\AppData\Local\Temp\~vsBA2E.sql
+  
+   --pr_SendSmsSQL '917733919772','DRUGS POINT PHARMACY Inv# 68617 Finalized at 2:11PM.NICOTEX 2 GUM FRUITY MINT Ordered:3,Invoiced:2','','1998','7854778' 
+   
+  -- pr_SendSmsSQL '9782265250','RAJA MEDICAL STORE,SALES RETURN NO. 3065 AGT. 60401 of amt Rs. 935.00 is settled on 31-12-2019. Check Ledger,Live Order, status online at shreemarutinandan.com.','','1998','7854778'      
+            
+ALTER  procedure [dbo].[pr_SendSmsSQL]                   
+    @MobileNo varchar(12),                   
+    @smstext as varchar(300),                   
+    @sResponse varchar(1000) OUT ,      
+   @code as varchar(300) ,    
+    @jobname as varchar(1000)          
+ as BEGIN                       
+print @MobileNo          
+          
+          
+DECLARE @obj int          
+          
+DECLARE @hr int          
+          
+DECLARE @status int          
+          
+DECLARE @msg varchar(255)          
+          
+ DECLARE @response varchar(8000)          
+          
+EXEC @hr = sp_OACreate 'MSXML2.ServerXMLHttp.3.0', @obj OUT          
+print @hr          
+IF @hr < 0          
+          
+BEGIN          
+          
+RAISERROR('sp_OACreate MSXML2.ServerXMLHttp failed', 16, 1)          
+print @hr          
+print 'sp_OACreate MSXML2.ServerXMLHttp failed'          
+RETURN          
+          
+END          
+          
+Declare @sUrl as varchar(500)       
+Declare @smsg as varchar(500)         
+set @sUrl = 'https://api.msg91.com/api/sendhttp.php?route=4&sender=SMNPPL&message=#Msg#&country=91&mobiles=#MobNo#&authkey=289202A8Q4GDt35d503b9a'
+
+--'https://api.msg91.com/api/sendhttp.php?route=4&sender=SMNPPL&message=#Msg#&country=91&mobiles=#MobNo#&authkey=289202A8Q4GDt35d503b9a'   
+set @smsg=REPLACE(@smstext,'#',' ')            
+--set @smsg=REPLACE(@smstext,'&',' ')             
+ 
+set @sUrl=REPLACE(@sUrl,'#MobNo#',@MobileNo)                     
+set @sUrl=REPLACE(@sUrl,'#Msg#',@smsg)                      
+print @sUrl               
+          
+EXEC @hr = sp_OAMethod @obj, 'Open', NULL, 'GET', @sUrl , false          
+          
+          
+          
+IF @hr < 0          
+          
+BEGIN          
+          
+SET @msg = 'sp_OAMethod Open failed'          
+          
+print @msg          
+          
+GOTO err          
+          
+END          
+          
+EXEC @hr = sp_OAMethod @obj, 'send'          
+          
+IF @hr < 0          
+          
+BEGIN          
+          
+SET @msg = 'sp_OAMethod Send failed'          
+print @msg          
+GOTO err          
+          
+END          
+          
+EXEC @hr = sp_OAGetProperty @obj, 'status', @status OUT          
+          
+IF @hr < 0          
+          
+BEGIN          
+          
+SET @msg = 'sp_OAMethod read status failed'          
+print @msg          
+GOTO err          
+          
+END          
+      
+EXEC @hr = sp_OAGetProperty @obj, 'responseText', @response OUT          
+          
+ --Declare @CustID varchar(12)       
+  --set @CustID = (select top 1 CustID    from esdata.dbo.Acm where mobile = '9782265250')      
+  --print @custID      
+insert into send_log_new (mobile, sendtext, response, created, createddate,custcode,jobname)                   
+    values( @MobileNo, @smstext, @response, 'System', GETDATE(),@code,@jobname)              
+          
+IF @hr < 0          
+          
+BEGIN          
+          
+SET @msg = 'sp_OAMethod read response failed'          
+print @msg          
+GOTO err          
+          
+END          
+          
+EXEC @hr = sp_OADestroy @obj          
+          
+RETURN          
+          
+err:          
+          
+EXEC @hr = sp_OADestroy @obj          
+          
+          
+          
+RAISERROR(@msg, 16, 1)          
+          
+          
+          
+END

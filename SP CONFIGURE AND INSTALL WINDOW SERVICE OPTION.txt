@@ -1,0 +1,180 @@
+
+
+
+
+
+
+
+===========================To Run DB Mail===========================================
+sp_configure 'show advanced options', 1;
+GO
+RECONFIGURE;
+GO
+ 
+sp_configure 'Database Mail XPs', 1;
+GO
+RECONFIGURE
+GO
+ 
+===================to Automate OLE AUTOMATION=====================================
+
+sp_configure 'show advanced options', 1 
+
+GO 
+RECONFIGURE; 
+GO 
+sp_configure 'Ole Automation Procedures', 1 
+GO 
+RECONFIGURE; 
+GO 
+sp_configure 'show advanced options', 1 
+GO 
+RECONFIGURE;
+Error = [Microsoft][SQL Server Native Client 10.0]Login timeout expired
+
+
+
+
+https://dba.stackexchange.com/questions/23566/writing-select-result-to-a-csv-file
+https://www.sqlshack.com/bcp-bulk-copy-program-command-in-action/
+
+
+EXEC  master..xp_cmdshell 'SQLCMD -S LAXMAYA-HP -E -Q "SELECT TOP 10 * FROM master.dbo.a" -b -o C:\NEWQmyoutpuaaat.txt'
+
+
+EXEC master..xp_cmdshell 'BCP master.dbo.a OUT C:\ProdSQLShackDemo.dat -T -c'
+
+
+EXEC master..xp_cmdshell  'bcp bcptest out "C:\data1.dat" -c -t -S LAXMAYA-HP -d master -G'
+
+
+SELECT @SQL='sqlcmd -E -S ' + 'LAXMAYA-HP -i C:\NEWQ\script1.sql'
+EXEC xp_cmdshell 'sqlcmd -E -S  LAXMAYA-HP -i C:\NEWQ\NEWQmyoutpuaaat.txt'
+
+https://www.youtube.com/watch?v=wRwKLUOyppM
+
+DECLARE @dump_data1 varchar(500)
+
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+Declare @sql varchar(MAX) = ' '
+
+EXEC  master..xp_cmdshell 'SQLCMD -S LAXMAYA-HP -E -Q'  @sql  ' -b -o D:\NEWQmyoutpuaaat.txt'
+
+DECLARE @dump_data1 varchar(500)
+
+SET @dump_data1 = 'select distinct Convert(varchar,b.Vdt,105) as customedate, a.Name,a.Altercode, a.mobile,COUNT(b.vno) as 
+   count from esdata.dbo.Acm a, esdata.dbo.salepurchase1 b where a.code=b.Acno  and a.Name is not null  and a.name!=''
+    and a.Slcd='CL' group by a.code,convert(varchar,b.Vdt,105), a.Name,a.Altercode, a.mobile' 
+
+EXEC xp_cmdshell @dump_data1
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------
+**********************************************************************
+** Visual Studio 2017 Developer Command Prompt v15.9.14
+** Copyright (c) 2017 Microsoft Corporation
+**********************************************************************
+
+C:\Windows\System32>cd /
+
+C:\>cd "Program Files (x86)"
+
+C:\Program Files (x86)>cd /
+
+C:\>cd Windows
+
+C:\Windows>cd Microsoft.NET
+
+C:\Windows\Microsoft.NET>cd Framework
+
+C:\Windows\Microsoft.NET\Framework>
+C:\Windows\Microsoft.NET\Framework>cd v4.0.30319
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>installutil.exe -u "C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe"
+Microsoft (R) .NET Framework Installation utility Version 4.7.3190.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+
+The uninstall is beginning.
+See the contents of the log file for the C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe assembly's progress.
+The file is located at C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog.
+Uninstalling assembly 'C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe'.
+Affected parameters are:
+   logtoconsole =
+   logfile = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog
+   assemblypath = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe
+Removing EventLog source SimpleService.
+Warning: The source SimpleService is not registered on the local machine.
+Service SimpleService is being removed from the system...
+An exception occurred during the uninstallation of the System.ServiceProcess.ServiceInstaller installer.
+System.ComponentModel.Win32Exception: The specified service does not exist as an installed service
+An exception occurred while uninstalling. This exception will be ignored and the uninstall will continue. However, the application might not be fully uninstalled after the uninstall is complete.
+
+The uninstall has completed.
+An exception occurred while uninstalling. This exception will be ignored and the uninstall will continue. However, the application might not be fully uninstalled after the uninstall is complete.
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>installutil.exe -i "C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe"
+Microsoft (R) .NET Framework Installation utility Version 4.7.3190.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Running a transacted installation.
+
+Beginning the Install phase of the installation.
+See the contents of the log file for the C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe assembly's progress.
+The file is located at C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog.
+Installing assembly 'C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe'.
+Affected parameters are:
+   i =
+   logfile = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog
+   assemblypath = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe
+   logtoconsole =
+Installing service SimpleService...
+Service SimpleService has been successfully installed.
+Creating EventLog source SimpleService in log Application...
+
+The Install phase completed successfully, and the Commit phase is beginning.
+See the contents of the log file for the C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe assembly's progress.
+The file is located at C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog.
+Committing assembly 'C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe'.
+Affected parameters are:
+   i =
+   logfile = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.InstallLog
+   assemblypath = C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe
+   logtoconsole =
+
+The Commit phase completed successfully.
+
+The transacted install has completed.
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>
+
+SET @dump_data1 =  'bcp "select * from master.dbo.a" queryout "D:\abc.txt" -c -S LAXMAYA-HP -T'
+
+EXEC xp_cmdshell @dump_data1
+
+===================WINDOW SERVICE INSTALL CMD===================================
+C:\>C:\installutil -i C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\obj\x86\Debug\WindowsServiceCS.exe
+
+C:\Windows\Microsoft.NET\Framework\v4.0.30319>InstallUtil.exe C:\Users\Laxmaya-HP\Downloads\WindowsService_SendEmail\WindowsServiceCS\bin\Debug\WindowsServiceCS.exe
+M

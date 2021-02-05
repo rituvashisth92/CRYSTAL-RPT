@@ -1,0 +1,163 @@
+USE [msdb]
+GO
+
+/****** Object:  Job [AutoINvoice]    Script Date: 11/09/2020 12:41:31 ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 11/09/2020 12:41:31 ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'AutoINvoice', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=0, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'getRecord', 
+		@category_name=N'[Uncategorized (Local)]', 
+		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [getRecords]    Script Date: 11/09/2020 12:41:31 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'getRecords', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=3, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'Truncate table esdata.dbo.temptbl;
+Insert into esdata.dbo.TempTbl
+select a.Vno,c.acno, replace(replace(replace(replace(replace(LEFT(b.name, 32),''.'',''''),'')'',''_''),''('',''_''),''/'',''''),'','','''') as Custname, replace(b.email,'' '',''''), c.GSTVno from 
+
+esdata.dbo.BillTrackDet a, esdata.dbo.Acm b, esdata.dbo.Salepurchase1 c where a.Vno=c.Vno and a.Vdt=c.Vdt and b.code=c.Acno and
+CONVERT(datetime, CONVERT(datetime, a.ScanDt, 35) + '' '' + a.mTime, 105) >DATEADD(Minute, -10, GETDATE()) and a.Srl=2 and a.SubSrl=7  
+and b.email!='''' and b.email!=''NA'' ;', 
+		@database_name=N'EsData', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [SendMail]    Script Date: 11/09/2020 12:41:31 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'SendMail', 
+		@step_id=2, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'
+DECLARE 
+    @Vno VARCHAR(50), 
+    @Acno NVARCHAR(50),
+    @CustName NVARCHAR(50),
+    @Email NVARCHAR(50);
+ 
+DECLARE cursor_product CURSOR
+FOR SELECT 
+        Vno, 
+        Acno,
+        CustName,
+        Email
+    FROM 
+        EsData.dbo.TempTbl;
+ 
+OPEN cursor_product;
+ 
+FETCH NEXT FROM cursor_product INTO 
+    @Vno, 
+    @Acno,
+    @CustName,
+    @Email;
+ 
+WHILE @@FETCH_STATUS = 0
+    BEGIN
+		declare @query NVARCHAR(1000);
+		Declare @Sub NVARCHAR(100);
+		Declare @Body NVARCHAR(1000);
+		Declare @Receipients NVARCHAR(50);
+		Declare @FilePath NVARCHAR(500);
+		Declare @FileName NVARCHAR(500);
+		
+	--	declare @GSTVno NVARCHAR(500);
+	--	declare @pp NVARCHAR(500);
+	--	Select @pp=''SELECT GSTVno FROM Esdata.dbo.View_AutoInv WHERE Esdata.dbo.View_AutoInv.Vno=''+@Vno+''''
+ --EXEC  @GSTVno= xp_cmdshell @pp;
+
+		
+		Set @FileName=+@Vno+''_SMNPPL'';
+		
+SELECT @query= ''BCP "select ''''SUPPLIER'''',''''BILL NO.'''',''''DATE'''',''''COMPANY'''',''''CODE'''',''''BACODE'''',''''NAME'''',''''PACK'''',''''BATCH'''',''''EXPIRY'''',''''QTY'''',''''FQTY'''',''''HALFP'''',''''FTRATE'''',''''TRATE'''',''''MRP'''',''''DIS'''',''''EXCISE'''',''''VAT'''',''''ADNLVAT'''',''''AMOUNT'''',''''LOCACLCENT'''',''''SCM1'''',''''SCM2'''',''''SCMPER'''',''''HSNCODE'''',''''CGST'''',''''SGST'''',''''IGST'''' union all select Supplier,GSTVno,date,company,cast(Vno as Varchar(10))code,Barcode,name,Pack,Batch,expiry,cast(Qty as Varchar(10)),cast(fqty as Varchar(10)),cast(Halfp as Varchar(10)),cast(Ftrate as Varchar(10)),cast(Trate as Varchar(10)),cast(Mrp as Varchar(10)),cast(Dis as Varchar(10)),cast(excise as Varchar(10)),cast(VAT as Varchar(10)),cast(AdnlVat as Varchar(10)),cast(NetAmt as Varchar(10)),LocalCent,cast(scm1 as Varchar (10)),cast(scm2 as Varchar(10)),cast(ScmPer as Varchar(10)),HSNCode,cast(CGST as Varchar(10)),cast(SGST as Varchar(10)),cast(IGST as Varchar(10)) FROM Esdata.dbo.View_AutoInv WHERE Esdata.dbo.View_AutoInv.Vno=''+@Vno+''" queryout "E:\LogFiles\''+@FileName+''.csv" -c -t, -T -S '' 
+EXEC xp_cmdshell @query; --, NO_OUTPUT;  
+
+set @FilePath=''E:\LogFiles\''+@FileName+''.csv'';
+--@FileName
+set @Sub=''Invoice No: ''+@Vno+'' From SHREE MARUTI NANDAN PHARMACEUTICALS PVT.LTD.'';
+set @Body=''Dear, ''+@CustName+''
+
+Please find attached the copy of the invoice. 
+THANKS N REGARDS,
+SHREE MARUTI NANDAN PHARMACEUTICALS PVT LTD.
+NOIDA 
+CUSTOMER SATISFACTION IS OUR MOTO'';
+  -- set @Email=''rituvashisth92@gmail.com'';
+  
+
+EXEC msdb.dbo.sp_send_dbmail
+  @profile_name = ''DB mail profile'', 
+  @recipients = @Email,
+  @subject =@Sub, 
+  @body = @Body,
+  @importance = ''HIGH'',
+  @file_attachments = @FilePath 
+		
+FETCH NEXT FROM cursor_product INTO 
+   @Vno, 
+   @Acno,
+   @CustName,
+   @Email;
+END;
+CLOSE cursor_product;
+DEALLOCATE cursor_product;
+', 
+		@database_name=N'EsData', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DailyAutomatic Invoice', 
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=4, 
+		@freq_subday_interval=10, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20201003, 
+		@active_end_date=99991231, 
+		@active_start_time=90000, 
+		@active_end_time=210000, 
+		@schedule_uid=N'0d7ba86f-42d0-467a-ad8e-2c8fad39f114'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO
+
+
